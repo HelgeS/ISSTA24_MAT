@@ -11,8 +11,8 @@ def get_args():
     # Environment
     parser.add_argument("--scenario-name", type=str, default="simple_tag", help="name of the scenario script")
     parser.add_argument("--max-episode-len", type=int, default=100, help="maximum episode length")
-    parser.add_argument("--time-steps", type=int, default=2000, help="number of time steps")
-    # 一个地图最多env.n个agents，用户可以定义min(env.n,num-adversaries)个敌人，剩下的是好的agent
+    parser.add_argument("--time-steps", type=int, default=2000, help="number of time steps") 
+    # A map has at most env.n agents. The user can define min(env.n, num-adversaries) enemies, and the rest are good agents.
     parser.add_argument("--num-adversaries", type=int, default=1, help="number of adversaries")
     # Core training parameters
     parser.add_argument("--lr-actor", type=float, default=1e-4, help="learning rate of actor")

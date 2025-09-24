@@ -20,7 +20,7 @@ class Buffer:
 
     # store the episode
     def store_episode(self, o, u, r, o_next):
-        idxs = self._get_storage_idx(inc=1)  # 以transition的形式存，每次只存一条经验
+        idxs = self._get_storage_idx(inc=1)  # Store in the form of transition, only one experience is stored at a time
         for i in range(self.args.n_agents):
             with self.lock:
                 self.buffer['o_%d' % i][idxs] = o[i]

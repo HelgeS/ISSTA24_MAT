@@ -51,12 +51,12 @@ def compute_wl_propagation_aggregation(n_nodes, init_labels, iterations, weights
     '''
     n_items: The number of attributes of the node
     '''
-    dict_labels = {}
-    dict_labels[0] = init_labels#存储每次传播的结果
+    dict_labels = {} 
+    dict_labels[0] = init_labels# Store the result of each propagation
     
     for it in range(iterations):
-        label_before = dict_labels[it]  #传播前的状态
-        label_after = []    #传播后的状态
+        label_before = dict_labels[it]  # State before propagation
+        label_after = []    # State after propagation
         for node_id in range(n_nodes):
             label_node = label_before[node_id]
             label_node_new = []
@@ -72,8 +72,5 @@ def compute_wl_propagation_aggregation(n_nodes, init_labels, iterations, weights
                     for i in range(n_items):
                         label_node_new[i] += 1 / weight * label_neighbor[i]
             label_after.append(label_node_new)
-        dict_labels[it+1] = np.array(label_after)
-    return dict_labels   #返回最终的传播结果
-
-
-
+        dict_labels[it+1] = np.array(label_after) 
+    return dict_labels   # Return the final propagation result

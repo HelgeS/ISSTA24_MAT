@@ -42,13 +42,13 @@ def make_env(args, seed):
     # create multiagent environment
     env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation, scenario.collision)
     # env = MultiAgentEnv(world)
-    args.n_players = env.n  # 包含敌人的所有玩家个数
-    args.n_agents = env.n - args.num_adversaries  # 需要操控的玩家个数，虽然敌人也可以控制，但是双方都学习的话需要不同的算法
-    args.obs_shape = [env.observation_space[i].shape[0] for i in range(args.n_agents)]  # 每一维代表该agent的obs维度
+    args.n_players = env.n  # Total number of players, including enemies
+    args.n_agents = env.n - args.num_adversaries  # Number of agents to control. Although enemies can also be controlled, different algorithms are needed if both sides are learning.
+    args.obs_shape = [env.observation_space[i].shape[0] for i in range(args.n_agents)]  # Each dimension represents the obs dimension of the agent
     action_shape = []
     for content in env.action_space:
         action_shape.append(content.n)
-    args.action_shape = action_shape[:args.n_agents]  # 每一维代表该agent的act维度
+    args.action_shape = action_shape[:args.n_agents]  # Each dimension represents the act dimension of the agent
     args.high_action = 1
     args.low_action = -1
     return env, args
