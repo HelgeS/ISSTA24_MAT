@@ -3,6 +3,7 @@ from common.arguments import get_args
 from common.utils import make_env
 import numpy as np
 import random
+import os
 import torch
 from ast import literal_eval
 from graph import TeamGraph
@@ -169,6 +170,13 @@ if __name__ == '__main__':
     args = get_args()
     
     # init
+    # DisQ: Logging
+    results = []
+    n_fails = 0
+    n_collision = 0
+    n_episodes = 0
+    disq_skip_counter = 0
+
     seed_energy = {}
     corpus_total = []
     seed_collision = {}
@@ -208,9 +216,34 @@ if __name__ == '__main__':
                 init_wl_dis_list.append(wl_dis)
     init_wl_dis = sum(init_wl_dis_list)/len(init_wl_dis_list)
 
+    # DisQ Calibration: Start
+    all_q_distances = []
+    top_percentage = 0.9
+    disq_calibration_episodes = 25
+    for _ in range(args.disq_calibration_episodes):
+        # This code is taken directly from the `mutate` function
+        # It seems strange that all landmarks are assigned the same size,
+        # but we follow the original code here.
+        # No other parameters are needed to instantiate the environment.
+        random_seed = {}
+        num_landmarks = 2
+        
+        for i in range(num_landmarks):
+            size = random.uniform(0,0.5)
 
-    for i in range(args.evaluate_episodes):
+        random_seed["size"] = size
+        
+        env, args = make_env(args, random_seed)
+        runner = Runner(args, env)
+        disq_value, _ = runner.check_disq(random_seed, rec_threshold=0.5)
+        all_q_distances.append(disq_value)
 
+    disq_threshold = np.quantile(all_q_distances, top_percentage)
+    # DisQ Calibration: End
+
+    print("DisQ threshold (top %.1f%%): %f" % (top_percentage*100, disq_threshold))
+
+    while n_episodes < args.evaluate_episodes:
         selected_seed_index = select_seed(seed_energy, corpus_total)
         
         seed = corpus_total[selected_seed_index]
@@ -221,13 +254,20 @@ if __name__ == '__main__':
         #mutate_seed = corpus_total[i]
         #mutate_seed = corpus_total[i]
         env, args = make_env(args,mutate_seed)
+
         runner = Runner(args, env)
+
+        # DisQ computation
+        disq_value, disq_skip = runner.check_disq(mutate_seed, rec_threshold=disq_threshold)
+
+        if args.disq_filter and disq_skip:
+            disq_skip_counter += 1
+            continue
+
         returns, collision, game_state,reward_list = runner.evaluate(mutate_seed)
         max_r = max(reward_list)
         max_r_step = reward_list.index(max_r)
         select_list = [max_r_step-4,max_r_step-2,max_r_step,max_r_step+2,max_r_step+4]
-
-        print('Average returns is', returns)
     
 
         #评估多样性
@@ -280,10 +320,36 @@ if __name__ == '__main__':
 
         seed_energy[selected_seed_index] += delta
 
+        n_fails += is_fail
+        n_collision += collision
+        n_episodes += 1
+
         if is_fail and dis_all > 0.5:
             seed_energy[len(corpus_total)] = 1 + 0.5 * np.tanh(delta_ev)
             collision_num.append(collision)
             seed_collision[len(corpus_total)] = [0,0]
             corpus_total.append(mutate_seed)
-            
-            
+
+        print('Ep. %d, returns: %d, fails: %d (%.3f), collision: %d (%.1f), DisQ: %.3f (skipped %d)' % (n_episodes, returns, n_fails, n_fails/n_episodes*100, n_collision, n_collision/n_episodes, disq_value, disq_skip_counter))
+
+        results.append(
+            (n_episodes, returns, is_fail, collision, disq_value)
+        )
+
+    output_path = 'disq_simple_adv_'
+    
+    if args.disq_filter:
+        output_path += '_filtered'
+    else:
+        output_path += '_unfiltered'
+    
+    counter = 0
+    while os.path.exists(output_path + '_' + str(counter) + '.txt'):
+        counter += 1
+    
+    output_path += '_' + str(counter) + '.txt'
+
+    with open(output_path, 'w') as f:
+        f.write("n_episodes\treturns\tis_fail\tcollision\tdisq_value\n")
+        for item in results:
+            f.write("%s\n" % "\t".join(map(str, item)))

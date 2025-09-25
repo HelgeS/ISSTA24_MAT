@@ -5,7 +5,7 @@ import torch
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
+import itertools
 
 class Runner:
     def __init__(self, args, env):
@@ -62,9 +62,17 @@ class Runner:
             self.epsilon = max(0.05, self.epsilon - 0.0000005)
             np.save(self.save_path + '/returns.pkl', returns)
     
-    
-
-
+    def check_disq(self, seed, rec_threshold=0.5):
+        s = self.env.reset(seed)
+        max_q_values = []
+        with torch.no_grad():
+            for agent_id, agent in enumerate(self.agents):
+                action = agent.select_action(s[agent_id], 0, 0)
+                max_q_values.append(np.max(action))
+        
+        disq_value = sum(abs(a - b) for a, b in itertools.combinations(max_q_values, 2))
+        skip_recommendation = disq_value < rec_threshold
+        return disq_value, skip_recommendation
 
     def evaluate(self, seed):
         returns = []
@@ -79,7 +87,7 @@ class Runner:
             game_state_list = []
             action_adv_list = []
             for time_step in range(self.args.evaluate_episode_len):
-                self.env.render()
+                #self.env.render()
                 actions = []
                 with torch.no_grad():
                     for agent_id, agent in enumerate(self.agents):
@@ -104,5 +112,5 @@ class Runner:
             # with open('init_state_simple_adv.txt','a') as f:
             #     f.write(str(game_state_list)+'\n')
             returns.append(rewards)
-            print('Returns is', rewards)
+            # print('Returns is', rewards)
         return sum(returns), n_collision,game_state_list,reward_list

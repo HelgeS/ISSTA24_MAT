@@ -34,6 +34,9 @@ def get_args():
     parser.add_argument("--evaluate", type=bool, default=True, help="whether to evaluate the model")
     parser.add_argument("--evaluate-rate", type=int, default=1000, help="how often to evaluate model")
     parser.add_argument("--iterations", type=int, default=2, help="the iteration of wwl")
+    parser.add_argument("--disq-filter", action="store_true", default=False, help="whether to filter seeds based on disq value")
+    parser.add_argument("--disq-quantile", type=float, default=0.9, help="disq quantile for threshold calibration")
+    parser.add_argument("--disq-calibration-episodes", type=int, default=25, help="number of episodes for disq calibration")
     args = parser.parse_args()
 
     return args
