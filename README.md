@@ -1,3 +1,10 @@
+**Note: This is a fork of the original repository**
+
+We integrate the DisQ heuristic (Disagreeing Q-values) to focus on test cases, where there is a disagreement in exzpected rewards among the cooperating agents.
+
+[Here is the original repository](https://github.com/issta24/ISSTA24_MAT)
+
+
 # <font size=6>MAT</font>
 This repository contains data and code for the paper Behavioral Diversity Guided Testing for Multi-Agent Systems
 
